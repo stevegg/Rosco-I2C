@@ -1,0 +1,12 @@
+GAL16V8
+DECODER
+
+A8 A9 A10 A11 A12 A13 A14 A15 A16 GND
+A17 I2CSEL A18 A19 NC NC NC IOSEL NC VCC
+
+/I2CSEL  =  /IOSEL *  A19 *
+           /A18 * /A17 * /A16 * /A15 * /A14 *
+            A13 *  A12 *  A11 *  A10 *  A9  * A8
+
+DESCRIPTION
+Address Decoder for Rosco I2C at F83F00
