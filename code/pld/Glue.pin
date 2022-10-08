@@ -2,14 +2,14 @@
 
  Pin # | Name     | Pin Type
 -----------------------------
-   1   | I2CSEL   | Input
-   2   | RW       | Input
-   3   | AS       | Input
-   4   | LDS      | Input
-   5   | FC0      | Input
-   6   | FC1      | Input
-   7   | FC2      | Input
-   8   | VPA      | Input
+   1   | CLK      | Input
+   2   | I2CSEL   | Input
+   3   | RW       | Input
+   4   | AS       | Input
+   5   | LDS      | Input
+   6   | UDS      | Input
+   7   | NC       | Input
+   8   | NC       | Input
    9   | DTACKI2C | Input
   10   | GND      | GND
   11   | NC       | Input
@@ -17,8 +17,8 @@
   13   | NC       | NC
   14   | NC       | NC
   15   | NC       | NC
-  16   | NC       | NC
-  17   | NC       | NC
+  16   | UDSEN    | Output
+  17   | LDSEN    | Output
   18   | DTACK    | Output
   19   | I2CENBL  | Output
   20   | VCC      | VCC

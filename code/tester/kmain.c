@@ -7,15 +7,16 @@
 void kmain() {
 
   printf("Starting up...");
-  volatile int *address = (int *)0xF83F01;
+  volatile char *address = (char *)0xF83F01;
+  unsigned long count = 0l;
+  char buffer[40];
+  unsigned char value = 0;
   while ( 1 ) {
-    *address = 0x2A;
-  }
+    sprintf(buffer, "Sending %lu with value %d", count ++, value );
+    printf(buffer);
+    *address = value ++;
 
-  // while ( 1 ) {
-  //   for ( unsigned char i = 0; i < 255; i ++ ) {
-  //     *address = i;
-  //   }
-  // }
+    printf("complete\r\n");
+  }
 }
 

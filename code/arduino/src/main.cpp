@@ -2,111 +2,83 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_LEDBackpack.h>
 
-/**
- * Fuse settings for ATMega 1284 for 16mhz external oscillator
- * Low Byte: 0xFF (blank all)
- * High Byte: 0xDE (Check SPIEN and BOOTRST)
- * Extended: 0xFD (Check BODLEVEL1)
- * 
- * Fuse settings for ATMega 32a for 16mhz external oscillator
- * Low Byte: 0xFF (blank all)
- * High Byte: 0xD8 (Check SPIEN, BOOTSZ1, BOOTSZ0, BOOTRST) 
- * 
- * Port Manipulation
- *    DDR 1 = OUTPUT, 0 = INPUT
- *    Use PIN to read
- *    Use PORT to write
- * 
- */
-
 Adafruit_7segment matrix = Adafruit_7segment();
 
-volatile boolean gvProcessBus = false;
-volatile byte gvAddress = 0x00;
-volatile byte gvData = 0x00;
-volatile boolean gvReading = false;
+#define DTACK_DDR DDRD
+#define DTACK_PIN PIND7
+#define DTACK_PORT PORTD
 
-#define SIGNAL_PORT     PORTD
-#define I2C_SEL_PIN     10
-#define I2CENABLE_PIN   PIND2
-#define AS_PIN          PIND3
-#define DTACK_PIN       PIND4
+#define I2CENABLE_DDR DDRD
+#define I2CENABLE_PIN PIND3
+#define I2CENABLE_PINS PIND
+#define I2CENABLE_PORT PORTD
+
+#define RW_DDR          DDRD
+#define RW_PINS         PIND
 #define RW_PIN          PIND5
-#define LDS_PIN         PIND6
+#define RW_PORT         PORTD
 
-#define DATA_PORT       PORTB
-#define DATA_PIN        PINB
-#define ADDRESS_PORT    PORTA
-#define ADDRESS_PIN     PINA
+#define DATA_PORT       PORTA
+#define DATA_DDR        DDRA
+#define DATA_PINS       PINA
 
-// Called whenever the I2C_SEL pin goes LOW
-void processBusInterruptHandler() {
-  if (!gvProcessBus) {
-    gvAddress = ADDRESS_PIN;
-    gvData = DATA_PIN;
-    gvReading = (SIGNAL_PORT & (1<<RW_PIN)) == 1;
-    // Now assert I2C_DTACK
-    // SIGNAL_PORT &= ~(1<<DTACK_PIN);
-    gvProcessBus = true;
-    // Set DTACK back to high
-    // SIGNAL_PORT |= (1<<DTACK_PIN);
-  }
-}
+#define ADDRESS_PORT    PORTB
+#define ADDRESS_PINS    PINB
+#define ADDRESS_DDR     DDRB
 
 void setup() {
 
-  Serial.begin(9600);
+  Wire.setClock(400000L);
 
   // Setup Address Port as INPUT
-  DDRA = 0x00;
+  ADDRESS_DDR = 0x00;
   // Setup Data Port initially as INPUT
-  DDRB = 0x00;
-
-  // DTACK_PIN is an OUTPUT
-  DDRD |= (1<<DTACK_PIN);
-  // Set it's state to HI
-  SIGNAL_PORT |= (1<<DTACK_PIN);
-
-  // I2CENABLE is an INPUT
-  DDRD &= ~(1<<I2CENABLE_PIN);
-
-  // AS is an INPUT
-  DDRD &= ~(1<<AS_PIN);
+  DATA_DDR = 0x00;
 
   // RW pin is an INPUT
-  DDRD &= ~(1<<RW_PIN);
+  RW_DDR &= ~(1<<RW_PIN);
 
-  // LDS pin is an INPUT
-  DDRD &= ~(1<<LDS_PIN);
+  // Set DTACK as INPUT so we can tristate it
+  DTACK_DDR &= ~(1<<DTACK_PIN);
 
+  // I2CENABLE is an INPUT
+  I2CENABLE_DDR &= ~(1<<I2CENABLE_PIN);
+  // Pullup
+  PORTD |= (1<<I2CENABLE_PIN);
+
+  // Disable timer
+  TIMSK0 &= ~_BV(TOIE0);
+
+  // Setup the 7 segment display
   matrix.begin(0x70);
-  // Show Rdy on Display
   matrix.print("Rdy");
   matrix.writeDisplay();
-
-  // Setup an interrupt on the falling edge of I2CENABLE pin
-  attachInterrupt(digitalPinToInterrupt(I2C_SEL_PIN), processBusInterruptHandler, FALLING);
-
-  Serial.println("Initialization complete.");
 }
 
 void loop() {
+  byte address = 0x00;
+  byte data = 0x00;
+  boolean RW = false;
+  unsigned long count = 0;
 
-  if ( gvProcessBus ) {
-    Serial.println("processBus...");
+  while (true) {
+    if ( !(I2CENABLE_PINS & (1<<I2CENABLE_PIN) ) ) {
+      // Read data, address and RW ports/pins
+      data = DATA_PINS;
+      address = ADDRESS_PINS;
+      RW = (RW_PORT & (1<<RW_PIN));
 
-    char buffer[128];
-
-
-    sprintf(buffer, "I2C: %c %02X : %02X", (gvReading)?'R':'W', gvAddress, gvData);
-    Serial.println(buffer);
-
-    if ( !gvReading ) {
-      // Write data to the 7 segment LED
-      matrix.print(gvData, HEX);
-      matrix.writeDisplay();
+      // Set as Output
+      DTACK_DDR |= (1<<DTACK_PIN);
+      // Assert DTACK
+      DTACK_PORT &= ~(1<<DTACK_PIN);
+      DTACK_PORT |= (1<<DTACK_PIN);
+      // Set as Input
+      DTACK_DDR &= ~(1<<DTACK_PIN);
+      if ( !RW ) {
+        matrix.print(data, DEC);
+        matrix.writeDisplay();
+      }
     }
-
-    gvProcessBus = false;    
   }
 }

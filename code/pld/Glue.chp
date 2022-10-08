@@ -3,21 +3,21 @@
                                 GAL16V8
 
                           -------\___/-------
-                   I2CSEL |  1           20 | VCC
+                      CLK |  1           20 | VCC
                           |                 |
-                       RW |  2           19 | I2CENBL
+                   I2CSEL |  2           19 | I2CENBL
                           |                 |
-                       AS |  3           18 | DTACK
+                       RW |  3           18 | DTACK
                           |                 |
-                      LDS |  4           17 | NC
+                       AS |  4           17 | LDSEN
                           |                 |
-                      FC0 |  5           16 | NC
+                      LDS |  5           16 | UDSEN
                           |                 |
-                      FC1 |  6           15 | NC
+                      UDS |  6           15 | NC
                           |                 |
-                      FC2 |  7           14 | NC
+                       NC |  7           14 | NC
                           |                 |
-                      VPA |  8           13 | NC
+                       NC |  8           13 | NC
                           |                 |
                  DTACKI2C |  9           12 | NC
                           |                 |
